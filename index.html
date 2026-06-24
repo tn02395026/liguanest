@@ -1010,6 +1010,11 @@ function renderExplainBtn(container, errors) {
       var r = await callClaude(buildExplainPrompt(errors, text), '請開始逐題解析', null);
       resultDiv.innerHTML = '<div class="explain-box">'+r+'</div>';
       btn.innerHTML = '收起解析'; btn.disabled = false;
+      // 存進文章庫
+      if (currentArticleId) {
+        var a = window.LN.articles.find(function(x){return x.id===currentArticleId;});
+        if (a) { a.explain = r; window.scheduleSave(); }
+      }
     } catch(e) {
       resultDiv.innerHTML = '<div class="explain-box">解析失敗，請再試一次。</div>';
       btn.innerHTML = '💡 解析本次所有錯誤'; btn.disabled = false;
