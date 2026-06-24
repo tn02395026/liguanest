@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>學習小窩</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --en:#2563A8;--en-l:#EBF1FA;--en-m:#93B4DC;
+  --jp:#8B3A3A;--jp-l:#FAF0F0;--jp-m:#D4938D;
+  --green:#2D7A4F;--green-l:#EBF5EF;
+  --red:#C0392B;--red-l:#FAEAE8;
+  --amber:#A0620A;--amber-l:#FDF3E3;
+  --purple:#6B3FA0;--purple-l:#F3EEFF;--purple-m:#B39DDB;
+  --bg:#F7F5F0;--sur:#FFFFFF;--sur2:#F0EDE6;
+  --bd:#E2DDD5;--bd2:#CBC5BB;
+  --t:#1A1714;--t2:#6B6560;--t3:#A09A92;
+  --a:var(--en);--al:var(--en-l);--am:var(--en-m);
+}
+body.jp{--a:var(--jp);--al:var(--jp-l);--am:var(--jp-m);}
+body{font-family:'Inter','Noto Sans TC',sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6;}
+textarea,input,button{font-family:inherit;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;}
+.spin.dk{border-color:rgba(0,0,0,0.12);border-top-color:var(--t2);}
+
+#stripe{height:3px;background:linear-gradient(90deg,var(--a),var(--am));transition:background .4s;}
+#topbar{background:var(--sur);border-bottom:1px solid var(--bd);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;}
+.logo{font-size:17px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:7px;}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--a);transition:background .3s;}
+.sync-status{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:5px;}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);}
+.sync-dot.ok{background:var(--green);}
+.sync-dot.saving{background:var(--amber);}
+.lang-sw{display:flex;gap:4px;background:var(--sur2);padding:3px;border-radius:20px;border:1px solid var(--bd);}
+.lang-sw button{padding:5px 16px;border-radius:16px;font-size:13px;font-weight:500;border:none;background:transparent;color:var(--t2);transition:all .2s;cursor:pointer;}
+.lang-sw button.active{background:var(--a);color:#fff;}
+#mainnav{background:var(--sur);border-bottom:1px solid var(--bd);display:flex;padding:0 20px;}
+.nav-item{padding:10px 16px;font-size:13px;color:var(--t2);border-bottom:2px solid transparent;cursor:pointer;font-weight:500;transition:all .2s;}
+.nav-item.active{color:var(--a);border-bottom-color:var(--a);}
+.page{display:none;}.page.active{display:block;}
+.card{background:var(--sur);border:1px solid var(--bd);border-radius:16px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.lbl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t3);margin-bottom:8px;}
+.btn{padding:8px 14px;border-radius:10px;font-size:13px;font-weight:500;border:1px solid var(--bd2);background:var(--sur);color:var(--t);display:inline-flex;align-items:center;gap:5px;transition:all .15s;cursor:pointer;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn.pri{background:var(--a);color:#fff;border-color:var(--a);}
+.btn.sm{padding:5px 10px;font-size:12px;}
+.btn.why{background:var(--purple-l);color:var(--purple);border-color:var(--purple-m);font-size:11px;padding:3px 9px;}
+.inp{width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--t);outline:none;transition:border-color .2s;}
+.inp:focus{border-color:var(--am);}
+textarea.inp{resize:vertical;line-height:1.6;}
+.practice-grid{display:grid;grid-template-columns:1fr 300px;gap:16px;padding:16px 20px;max-width:1100px;margin:0 auto;align-items:start;}
+.left-col,.right-col{display:flex;flex-direction:column;gap:14px;}
+.right-col{position:sticky;top:68px;}
+.cloze-box{background:var(--sur2);border-radius:10px;padding:16px;font-size:14.5px;line-height:3;}
+.blank-wrap{position:relative;display:inline-flex;flex-direction:column;align-items:center;margin:0 2px;}
+.blank-inp{border:none;border-bottom:2px solid var(--a);background:transparent;font-size:14.5px;color:var(--a);text-align:center;outline:none;padding:0 4px;font-family:inherit;min-width:80px;}
+.blank-inp.ok{border-bottom-color:var(--green);color:var(--green);}
+.blank-inp.bad{border-bottom-color:var(--red);color:var(--red);}
+.blank-fb{font-size:10px;position:absolute;bottom:-18px;white-space:nowrap;display:none;left:50%;transform:translateX(-50%);}
+.blank-fb.show{display:block;}
+.blank-fb.ok{color:var(--green);}
+.blank-fb.bad{color:var(--red);}
+.mcq-wrap{display:inline-flex;flex-direction:column;gap:4px;margin:0 4px;vertical-align:middle;}
+.mcq-label{font-size:10px;color:var(--purple);font-weight:600;letter-spacing:.05em;}
+.mcq-opts{display:flex;gap:5px;flex-wrap:wrap;}
+.mcq-opt{padding:4px 10px;border-radius:20px;font-size:13px;border:1.5px solid var(--purple-m);background:var(--purple-l);color:var(--purple);cursor:pointer;transition:all .15s;font-family:inherit;}
+.mcq-opt:hover{background:var(--purple-m);color:#fff;}
+.mcq-opt.selected{background:var(--purple);color:#fff;border-color:var(--purple);}
+.mcq-opt.ok{background:var(--green-l);color:var(--green);border-color:var(--green);cursor:default;}
+.mcq-opt.bad{background:var(--red-l);color:var(--red);border-color:var(--red);cursor:default;}
+.mcq-opt.reveal{background:var(--green-l);color:var(--green);border-color:var(--green);cursor:default;}
+.check-row{display:flex;gap:8px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap;}
+.score-row{display:flex;gap:10px;margin-top:14px;}
+.score-box{flex:1;border-radius:10px;padding:10px 12px;text-align:center;}
+.score-num{font-size:24px;font-weight:700;}
+.explain-box{animation:fadeIn .3s ease;background:var(--purple-l);border-left:3px solid var(--purple);border-radius:0 10px 10px 0;padding:10px 14px;font-size:13px;line-height:1.7;margin-top:6px;color:var(--t);}
+.dict-word{font-size:22px;font-weight:700;letter-spacing:-.5px;}
+.dict-pron{font-size:12px;color:var(--t3);margin:2px 0 8px;font-family:monospace;}
+.badge{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:20px;background:var(--al);color:var(--a);}
+.dict-def{font-size:13px;color:var(--t2);margin:10px 0 12px;padding-bottom:12px;border-bottom:1px solid var(--bd);line-height:1.65;}
+.ex-item{font-size:12px;color:var(--t2);padding:5px 0 5px 10px;border-left:2px solid var(--bd2);margin-bottom:5px;line-height:1.55;}
+.empty{text-align:center;color:var(--t3);font-size:13px;padding:20px 0;}
+.fc-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:var(--sur2);margin-bottom:6px;cursor:pointer;}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+.flip-card{background:var(--sur);border:1px solid var(--bd);border-radius:16px;min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;margin-bottom:16px;padding:30px;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.ai-fab{position:fixed;bottom:24px;right:24px;z-index:500;width:48px;height:48px;border-radius:50%;background:var(--a);color:#fff;border:none;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.18);transition:transform .2s;cursor:pointer;}
+.ai-fab:hover{transform:scale(1.08);}
+.ai-panel{position:fixed;bottom:82px;right:24px;z-index:500;width:320px;background:var(--sur);border:1px solid var(--bd);border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.12);display:none;flex-direction:column;max-height:420px;}
+.ai-panel.open{display:flex;}
+.ai-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.ai-msg{padding:8px 11px;border-radius:10px;font-size:13px;line-height:1.55;max-width:92%;}
+.ai-msg.user{background:var(--al);align-self:flex-end;}
+.ai-msg.bot{background:var(--sur2);align-self:flex-start;}
+.diff{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
+.diff-A1,.diff-A2{background:#E8F5E9;color:#2E7D32;}
+.diff-B1,.diff-B2{background:#FFF8E1;color:#F57F17;}
+.diff-C1,.diff-C2{background:#FCE4EC;color:#C62828;}
+.tip-box{background:var(--al);border:1px solid var(--am);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--t2);margin-bottom:10px;line-height:1.6;}
+.art-tag{font-size:11px;color:var(--a);background:var(--al);border:1px solid var(--am);border-radius:20px;padding:2px 8px;cursor:pointer;display:inline-block;margin:2px;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--t);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:9999;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.art-grid{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 107px);}
+.art-list{border-right:1px solid var(--bd);padding:16px;overflow-y:auto;}
+.art-item{padding:10px 12px;border-radius:10px;margin-bottom:6px;cursor:pointer;background:var(--sur2);border:1px solid var(--bd);transition:all .15s;}
+.art-item.active{background:var(--al);border-color:var(--a);}
+.art-detail{padding:20px;overflow-y:auto;}
+</style>
+</head>
+<body>
+<div id="stripe"></div>
+<div id="topbar">
+  <div class="logo"><div class="logo-dot"></div>學習小窩</div>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">連線中...</span></div>
+    <div class="lang-sw">
+      <button class="active" onclick="setLang('en')">🇺🇸 English</button>
+      <button onclick="setLang('jp')">🇯🇵 日本語</button>
+    </div>
+  </div>
+</div>
+<div id="mainnav">
+  <div class="nav-item active" onclick="showPage('practice')" id="nav-practice">✏️ 練習</div>
+  <div class="nav-item" onclick="showPage('articles')" id="nav-articles">📚 文章庫</div>
+  <div class="nav-item" onclick="showPage('flashcards')" id="nav-flashcards">🗃️ 字卡庫</div>
+  <div class="nav-item" onclick="showPage('review')" id="nav-review">🎯 複習考試</div>
+</div>
+
+<!-- PRACTICE -->
+<div class="page active" id="page-practice">
+<div class="practice-grid">
+  <div class="left-col">
+    <div class="card">
+      <div class="lbl">內容輸入</div>
+      <div class="tip-box">💡 <strong>YouTube 字幕：</strong>安裝免費 Chrome 擴充「YouTube Transcript & Summary Generator」，一鍵複製字幕貼到下方即可練習。</div>
+      <input class="inp" id="src-url" placeholder="來源網址（選填）" style="margin-bottom:10px;">
+      <textarea class="inp" id="text-input" rows="6" placeholder="貼上文章、YouTube 字幕或任何你想練習的文字..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn pri" id="btn-cloze" onclick="generateCloze()" style="flex:1;justify-content:center;">✨ AI 生成克漏字</button>
+        <button class="btn" id="btn-sum" onclick="generateSummary()" style="flex:1;justify-content:center;">📄 摘要</button>
+      </div>
+    </div>
+    <div class="card" id="cloze-card" style="display:none;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <div class="lbl" style="margin:0;">克漏字練習</div>
+        <span id="diff-badge"></span>
+        <span style="font-size:10px;padding:2px 6px;border-radius:10px;background:var(--purple-l);color:var(--purple);border:1px solid var(--purple-m);">🎯 易混淆詞自動出選擇題</span>
+        <span id="saved-badge" style="font-size:11px;color:var(--t3);display:none;">✓ 已存入文章庫</span>
+      </div>
+      <div class="cloze-box" id="cloze-content"></div>
+      <div class="check-row">
+        <button class="btn" onclick="resetCloze()">重置</button>
+        <button class="btn" id="trans-btn" style="display:none;" onclick="toggleTrans()">顯示中文翻譯</button>
+        <button class="btn pri" id="check-btn" onclick="checkAnswers()">批改答案</button>
+      </div>
+      <div id="trans-box" style="display:none;background:var(--al);border-left:3px solid var(--am);border-radius:0 10px 10px 0;padding:10px 14px;font-size:13px;line-height:1.7;margin-top:12px;"></div>
+      <div class="score-row" id="score-area" style="display:none;">
+        <div class="score-box" style="background:var(--green-l);"><div class="score-num" id="sc-ok" style="color:var(--green);">0</div><div style="font-size:11px;color:var(--t2);">答對</div></div>
+        <div class="score-box" style="background:var(--red-l);"><div class="score-num" id="sc-bad" style="color:var(--red);">0</div><div style="font-size:11px;color:var(--t2);">答錯</div></div>
+      </div>
+    </div>
+    <div class="card" id="summary-card" style="display:none;">
+      <div class="lbl">AI 摘要</div>
+      <div id="summary-content" style="background:var(--amber-l);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:10px 14px;font-size:13px;line-height:1.7;white-space:pre-wrap;"></div>
+    </div>
+    <div class="card" id="notes-card" style="display:none;">
+      <div class="lbl">我的筆記</div>
+      <textarea class="inp" id="note-input" rows="4" placeholder="寫下文法重點、單字用法或任何想記住的事..."></textarea>
+      <div style="margin-top:6px;"><button class="btn" onclick="saveNote()">儲存筆記</button></div>
+    </div>
+  </div>
+  <div class="right-col">
+    <div class="card">
+      <div class="lbl">字典</div>
+      <div id="dict-content"><div class="empty">批改後答錯的字會自動顯示<br>也可以點字卡查詢</div></div>
+    </div>
+    <div class="card">
+      <div class="lbl">字卡庫 <span id="fc-count" style="color:var(--t3);font-weight:400;">(0 張)</span></div>
+      <div id="fc-mini"><div class="empty" style="padding:10px 0;">練習後的單字會自動存到這裡</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ARTICLES -->
+<div class="page" id="page-articles">
+<div class="art-grid">
+  <div class="art-list" id="art-list"></div>
+  <div class="art-detail" id="art-detail"><div class="empty" style="padding-top:60px;">選擇左側文章查看</div></div>
+</div>
+</div>
+
+<!-- FLASHCARDS -->
+<div class="page" id="page-flashcards">
+<div style="padding:20px;max-width:700px;margin:0 auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h2 style="font-size:16px;font-weight:600;">字卡庫</h2>
+    <span id="fc-total" style="font-size:13px;color:var(--t3);">共 0 張</span>
+  </div>
+  <div id="fc-full"></div>
+</div>
+</div>
+
+<!-- REVIEW -->
+<div class="page" id="page-review">
+<div style="padding:20px;max-width:800px;margin:0 auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <h2 style="font-size:16px;font-weight:600;">複習考試</h2>
+    <div style="display:flex;gap:4px;background:var(--sur2);padding:3px;border-radius:20px;border:1px solid var(--bd);">
+      <button id="mode-flip" onclick="setMode('flip')" style="padding:5px 14px;border-radius:16px;font-size:12px;font-weight:500;border:none;background:var(--a);color:#fff;cursor:pointer;">翻卡模式</button>
+      <button id="mode-cloze" onclick="setMode('cloze')" style="padding:5px 14px;border-radius:16px;font-size:12px;font-weight:500;border:none;background:transparent;color:var(--t2);cursor:pointer;">克漏字模式</button>
+    </div>
+  </div>
+  <div id="review-flip">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t3);margin-bottom:16px;">
+      <span id="rv-prog">共 0 張字卡</span><span id="rv-score">本次：正確 0 / 錯誤 0</span>
+    </div>
+    <div class="flip-card" onclick="flipCard()" id="flip-card">
+      <div id="flip-front" style="font-size:36px;font-weight:700;letter-spacing:-1px;color:var(--t3);">按下方「開始複習」</div>
+      <div id="flip-back" style="display:none;flex-direction:column;gap:10px;align-items:center;">
+        <div id="fb-word" style="font-size:28px;font-weight:700;"></div>
+        <div id="fb-def" style="font-size:14px;color:var(--t2);"></div>
+        <div id="fb-ex" style="font-size:12px;color:var(--t3);font-style:italic;"></div>
+      </div>
+    </div>
+    <div id="art-links" style="display:none;margin-bottom:12px;"></div>
+    <p id="flip-hint" style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:12px;">點擊卡片翻面查看答案</p>
+    <div id="result-row" style="display:none;gap:10px;">
+      <button onclick="reviewResult(false)" style="flex:1;background:var(--red-l);color:var(--red);border:1px solid var(--red);border-radius:10px;padding:12px;font-size:14px;font-weight:500;cursor:pointer;">✗ 不記得</button>
+      <button onclick="reviewResult(true)" style="flex:1;background:var(--green-l);color:var(--green);border:1px solid var(--green);border-radius:10px;padding:12px;font-size:14px;font-weight:500;cursor:pointer;">✓ 記得</button>
+    </div>
+    <div id="start-area" style="text-align:center;margin-top:12px;">
+      <button onclick="startReview()" style="background:var(--a);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:14px;font-weight:500;cursor:pointer;">開始複習</button>
+    </div>
+  </div>
+  <div id="review-cloze" style="display:none;">
+    <div class="card"><div class="lbl">克漏字複習</div><div id="rv-cloze"></div></div>
+  </div>
+</div>
+</div>
+
+<div class="ai-panel" id="ai-panel">
+  <div style="padding:12px 14px;border-bottom:1px solid var(--bd);font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;">
+    <span>💬 問 AI <span style="color:var(--t3);font-weight:400;font-size:11px;">關於文章的問題</span></span>
+    <button onclick="toggleChat()" style="background:none;border:none;font-size:16px;color:var(--t3);cursor:pointer;">✕</button>
+  </div>
+  <div class="ai-msgs" id="ai-msgs"><div class="ai-msg bot">你好！可以問我文章的文法、單字用法或任何語言問題 😊</div></div>
+  <div style="display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--bd);">
+    <input class="inp" id="ai-input" placeholder="輸入問題..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button onclick="sendChat()" style="padding:7px 12px;border-radius:10px;background:var(--a);color:#fff;border:none;font-size:12px;cursor:pointer;">送出</button>
+  </div>
+</div>
+<button class="ai-fab" onclick="toggleChat()">💬</button>
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCxX1tVrHopOopOEP1bqUDmPxM-irdWoto",
+  authDomain: "linguanest-665ba.firebaseapp.com",
+  projectId: "linguanest-665ba",
+  storageBucket: "linguanest-665ba.firebasestorage.app",
+  messagingSenderId: "238766333254",
+  appId: "1:238766333254:web:87756a41f31e75351e1947"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const DOC_ID = "user_eddie";
+
+// ── Sync status ──
+function setSyncStatus(status) {
+  const dot = document.getElementById('sync-dot');
+  const text = document.getElementById('sync-text');
+  if (status === 'ok') { dot.className = 'sync-dot ok'; text.textContent = '已同步'; }
+  else if (status === 'saving') { dot.className = 'sync-dot saving'; text.textContent = '儲存中...'; }
+  else { dot.className = 'sync-dot'; text.textContent = '未連線'; }
+}
+
+// ── Load from Firebase ──
+async function loadData() {
+  try {
+    const snap = await getDoc(doc(db, "linguanest", DOC_ID));
+    if (snap.exists()) {
+      const data = snap.data();
+      window.cards = data.cards || [];
+      window.articles = data.articles || [];
+    }
+    setSyncStatus('ok');
+    renderFCMini();
+  } catch(e) {
+    setSyncStatus('error');
+    console.error(e);
+  }
+}
+
+// ── Save to Firebase ──
+let saveTimer = null;
+window.scheduleSave = function() {
+  setSyncStatus('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await setDoc(doc(db, "linguanest", DOC_ID), {
+        cards: window.cards,
+        articles: window.articles,
+        updatedAt: Date.now()
+      });
+      setSyncStatus('ok');
+    } catch(e) {
+      setSyncStatus('error');
+      console.error(e);
+    }
+  }, 1500);
+};
+
+loadData();
+</script>
+
+<script>
+// ── Global State ──
+window.cards = [];
+window.articles = [];
+let lang='en', currentArticleId=null;
+let transShowing=false, transCache=null, practiceChecked=false;
+let chatHistory=[], reviewQueue=[], reviewIdx=0, reviewOk=0, reviewBad=0, isFlipped=false, started=false, reviewMode='flip';
+
+// ── Claude API ──
+async function callClaude(system, user, history=[]) {
+  const msgs = history.length ? [...history,{role:'user',content:user}] : [{role:'user',content:user}];
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system,messages:msgs})
+  });
+  const d = await r.json();
+  if(d.error) throw new Error(d.error.message);
+  return d.content.map(b=>b.text||'').join('');
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+function setLang(l){
+  lang=l;document.body.classList.toggle('jp',l==='jp');
+  document.querySelectorAll('.lang-sw button').forEach((b,i)=>b.classList.toggle('active',(i===0&&l==='en')||(i===1&&l==='jp')));
+  renderFCMini();toast(l==='en'?'切換到英文學習模式':'日本語学習モードに切り替えました');
+}
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('nav-'+p).classList.add('active');
+  if(p==='articles') renderArticleList();
+  if(p==='flashcards') renderFCFull();
+  if(p==='review') renderReview();
+}
+
+// ── SRS ──
+function getWeight(c){const t=c.correct+c.wrong;if(!t)return 60;let w=Math.round(c.wrong/t*100);w=Math.max(10,Math.min(90,w));if((c.streak||0)>=3)w=Math.max(10,w-20);return w;}
+function weightedShuffle(arr){let pool=[];arr.forEach(c=>{for(let i=0;i<Math.ceil(getWeight(c)/10);i++)pool.push(c);});for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}const seen=new Set(),res=[];pool.forEach(c=>{if(!seen.has(c.word)){seen.add(c.word);res.push(c);}});return res;}
+
+// ── Cards ──
+function saveCard(word,correct,artId){
+  let c=window.cards.find(x=>x.word===word&&x.lang===lang);
+  if(!c){c={word,lang,def:'',examples:[],correct:0,wrong:0,streak:0,articleIds:[]};window.cards.push(c);}
+  if(correct===true){c.correct++;c.streak=(c.streak||0)+1;}
+  if(correct===false){c.wrong++;c.streak=0;}
+  if(artId&&!c.articleIds.includes(artId))c.articleIds.push(artId);
+  window.scheduleSave();
+}
+function langCards(){return window.cards.filter(c=>c.lang===lang);}
+
+function renderFCMini(){
+  const lc=langCards();
+  document.getElementById('fc-count').textContent=`(${lc.length} 張)`;
+  const el=document.getElementById('fc-mini');
+  if(!lc.length){el.innerHTML='<div class="empty" style="padding:10px 0;">練習後的單字會自動存到這裡</div>';return;}
+  el.innerHTML=lc.slice(-6).reverse().map(c=>{
+    const t=c.correct+c.wrong,dc=!t?'var(--t3)':c.correct/t>=0.6?'var(--green)':'var(--red)';
+    return`<div class="fc-item" onclick="lookupWord('${c.word}')"><span style="font-size:13px;font-weight:500;">${c.word}</span><span style="font-size:11px;color:var(--t3);display:flex;align-items:center;gap:4px;"><span class="dot" style="background:${dc};"></span>${!t?'新字卡':c.correct+'/'+t+' 正確'}</span></div>`;
+  }).join('');
+}
+
+function renderFCFull(){
+  const lc=langCards();
+  document.getElementById('fc-total').textContent=`共 ${lc.length} 張`;
+  const el=document.getElementById('fc-full');
+  if(!lc.length){el.innerHTML='<div class="empty" style="padding:60px 0;">還沒有字卡！</div>';return;}
+  el.innerHTML=lc.map(c=>{
+    const t=c.correct+c.wrong,w=getWeight(c),dc=!t?'var(--t3)':c.correct/t>=0.6?'var(--green)':'var(--red)';
+    const artLinks=(c.articleIds||[]).map(id=>{const a=window.articles.find(x=>x.id===id);return a?`<span class="art-tag" onclick="goToArticle('${id}')">📄 ${fmtDate(a.createdAt)}</span>`:''}).join('');
+    return`<div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="font-size:18px;font-weight:700;">${c.word}</span>
+            <span style="font-size:10px;padding:2px 6px;border-radius:10px;background:var(--sur2);color:var(--t3);border:1px solid var(--bd);">出現率 ${w}%</span>
+            ${(c.articleIds||[]).length?`<span style="font-size:10px;padding:2px 6px;border-radius:10px;background:var(--al);color:var(--a);">出現在 ${c.articleIds.length} 篇文章</span>`:''}
+          </div>
+          ${artLinks?`<div style="margin-top:4px;">${artLinks}</div>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span style="font-size:11px;color:var(--t3);display:flex;align-items:center;gap:4px;"><span class="dot" style="background:${dc};"></span>${!t?'新字卡':c.correct+'/'+t+' 正確'}</span>
+          <button class="btn sm" onclick="removeCard('${c.word}')">刪除</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function removeCard(word){
+  window.cards=window.cards.filter(c=>!(c.word===word&&c.lang===lang));
+  window.scheduleSave();renderFCFull();toast('已刪除字卡');
+}
+
+// ── Articles ──
+function fmtDate(ts){const d=new Date(ts);return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;}
+function fmtDateFull(ts){const d=new Date(ts);const days=['日','一','二','三','四','五','六'];return`${fmtDate(ts)} (${days[d.getDay()]})`;}
+function langArticles(){return window.articles.filter(a=>a.lang===lang).sort((a,b)=>b.createdAt-a.createdAt);}
+
+function createArticle(text,url,diff){
+  const id=Date.now().toString();
+  window.articles.push({id,lang,text:text.slice(0,2000),url:url||'',summary:'',note:'',difficulty:diff||'',createdAt:Date.now(),wordCount:text.split(/\s+/).length,title:text.slice(0,60).replace(/\n/g,' ')+'...'});
+  currentArticleId=id;
+  window.scheduleSave();
+  return id;
+}
+
+function goToArticle(id){currentArticleId=id;showPage('articles');setTimeout(()=>renderArticleDetail(id),50);}
+
+function renderArticleList(){
+  const la=langArticles(),el=document.getElementById('art-list');
+  if(!la.length){
+    el.innerHTML='<div class="empty" style="padding:40px 0;">還沒有文章記錄<br><br>去練習頁面貼文字並生成克漏字，<br>文章會自動儲存到這裡</div>';
+    document.getElementById('art-detail').innerHTML='<div class="empty" style="padding-top:60px;">選擇左側文章查看</div>';
+    return;
+  }
+  el.innerHTML=`<div style="font-size:13px;font-weight:600;color:var(--t2);margin-bottom:12px;">文章記錄 (${la.length})</div>`+la.map(a=>`
+    <div class="art-item${currentArticleId===a.id?' active':''}" onclick="selectArticle('${a.id}')">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--t3);">${fmtDate(a.createdAt)}</span>
+        ${a.difficulty?`<span class="diff diff-${a.difficulty}">${a.difficulty}</span>`:''}
+      </div>
+      <div style="font-size:13px;color:var(--t);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${a.title}</div>
+      ${a.url?`<div style="font-size:11px;color:var(--a);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">🔗 ${a.url}</div>`:''}
+    </div>`).join('');
+  if(currentArticleId)renderArticleDetail(currentArticleId);
+  else if(la.length)renderArticleDetail(la[0].id);
+}
+
+function selectArticle(id){currentArticleId=id;renderArticleList();}
+
+function renderArticleDetail(id){
+  const a=window.articles.find(x=>x.id===id);
+  if(!a){document.getElementById('art-detail').innerHTML='<div class="empty" style="padding-top:60px;">找不到文章</div>';return;}
+  const artCards=window.cards.filter(c=>c.articleIds&&c.articleIds.includes(id));
+  document.getElementById('art-detail').innerHTML=`<div style="max-width:720px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+          <span style="font-size:13px;color:var(--t3);">${fmtDateFull(a.createdAt)}</span>
+          ${a.difficulty?`<span class="diff diff-${a.difficulty}">${a.difficulty}</span>`:''}
+          <span style="font-size:11px;color:var(--t3);">${a.wordCount} 字</span>
+        </div>
+        ${a.url?`<a href="${a.url}" target="_blank" style="font-size:12px;color:var(--a);text-decoration:none;">🔗 ${a.url}</a>`:''}
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn sm pri" onclick="reCloze('${id}')" style="background:var(--a);border-color:var(--a);color:#fff;">✨ 再次練習</button>
+        <button class="btn sm" onclick="deleteArticle('${id}')">刪除</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px;"><div class="lbl">原文</div><div style="font-size:14px;line-height:1.9;white-space:pre-wrap;">${a.text}</div></div>
+    ${a.summary?`<div class="card" style="margin-bottom:14px;"><div class="lbl">AI 摘要</div><div style="background:var(--amber-l);border-left:3px solid var(--amber);border-radius:0 10px 10px 0;padding:10px 14px;font-size:13px;line-height:1.7;">${a.summary}</div></div>`:''}
+    ${a.note?`<div class="card" style="margin-bottom:14px;"><div class="lbl">我的筆記</div><div style="font-size:13px;color:var(--t2);line-height:1.7;white-space:pre-wrap;">${a.note}</div></div>`:''}
+    ${artCards.length?`<div class="card" style="margin-bottom:14px;"><div class="lbl">這篇文章的字卡 (${artCards.length} 張)</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${artCards.map(c=>{const t=c.correct+c.wrong,dc=!t?'var(--t3)':c.correct/t>=0.6?'var(--green)':'var(--red)';return`<div style="padding:4px 10px;border-radius:20px;background:var(--sur2);border:1px solid var(--bd);font-size:12px;display:flex;align-items:center;gap:5px;"><span class="dot" style="background:${dc};"></span>${c.word}<span style="color:var(--t3);">${!t?'新':c.correct+'/'+t}</span></div>`;}).join('')}</div></div>`:''}
+    <div class="card" id="art-cloze-area" style="display:none;"><div class="lbl">再次練習</div><div id="art-cloze-content" class="cloze-box"></div><div class="check-row"><button class="btn" onclick="resetArtCloze()">重置</button><button class="btn pri" id="art-check-btn" onclick="checkArtCloze('${id}')" style="background:var(--a);border-color:var(--a);">批改答案</button></div><div id="art-explains"></div></div>
+  </div>`;
+}
+
+async function reCloze(id){
+  const a=window.articles.find(x=>x.id===id);if(!a)return;
+  const area=document.getElementById('art-cloze-area'),content=document.getElementById('art-cloze-content');
+  area.style.display='block';content.innerHTML='<span class="spin dk"></span> 生成中...';
+  document.getElementById('art-check-btn').disabled=false;
+  document.getElementById('art-explains').innerHTML='';
+  try{const r=await callClaude(buildClozePrompt(),a.text);renderClozeInto(content,r);}
+  catch(e){content.textContent='生成失敗，請再試一次。';}
+}
+function resetArtCloze(){
+  document.querySelectorAll('#art-cloze-content .blank-inp').forEach(i=>{i.value='';i.classList.remove('ok','bad');});
+  document.querySelectorAll('#art-cloze-content .blank-fb').forEach(f=>f.classList.remove('show'));
+  document.querySelectorAll('#art-cloze-content .mcq-opt').forEach(o=>{o.classList.remove('selected','ok','bad','reveal');o.disabled=false;});
+  document.getElementById('art-check-btn').disabled=false;
+  document.getElementById('art-explains').innerHTML='';
+}
+function checkArtCloze(artId){
+  document.getElementById('art-check-btn').disabled=true;
+  const explains=document.getElementById('art-explains');explains.innerHTML='';
+  checkClozeContainer(document.getElementById('art-cloze-content'),artId,explains);
+  renderFCMini();
+}
+function deleteArticle(id){
+  window.articles=window.articles.filter(a=>a.id!==id);
+  window.scheduleSave();currentArticleId=null;renderArticleList();toast('已刪除文章');
+}
+
+// ── Cloze ──
+function buildClozePrompt(){
+  const isJP=lang==='jp';
+  return`你是語言學習助手。分析文章並生成克漏字練習。
+規則：
+1. 挑 4-6 個單字，分兩種類型：
+   - 一般填空：用 [BLANK:答案] 標記
+   - 易混淆選擇題：用 [MCQ:答案:選項A:選項B:選項C] 標記（共4個選項含答案）
+2. 易混淆詞：${isJP?'助詞(は/が/を/に/で)、同音異義詞、動詞変化':'affect/effect、rise/raise、fewer/less、since/for、make/do 等'}
+3. 每篇至少 1-2 題選擇題
+4. 評估難度 A1/A2/B1/B2/C1/C2
+5. 只輸出下面格式：
+DIFFICULTY:B1
+TEXT:文章內容含[BLANK:單字]和[MCQ:答案:選A:選B:選C]...`;
+}
+
+async function generateCloze(){
+  const text=document.getElementById('text-input').value.trim();
+  if(!text){toast('請先貼上文字內容');return;}
+  const btn=document.getElementById('btn-cloze');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> 生成中...';
+  document.getElementById('cloze-card').style.display='block';
+  document.getElementById('notes-card').style.display='block';
+  document.getElementById('score-area').style.display='none';
+  document.getElementById('trans-btn').style.display='none';
+  document.getElementById('trans-box').style.display='none';
+  document.getElementById('saved-badge').style.display='none';
+  document.getElementById('diff-badge').innerHTML='';
+  practiceChecked=false;transShowing=false;transCache=null;
+  const content=document.getElementById('cloze-content');
+  content.innerHTML='<span class="spin dk"></span> AI 分析中...';
+  try{
+    const r=await callClaude(buildClozePrompt(),text);
+    const diffM=r.match(/DIFFICULTY:([A-C][12])/);
+    const textM=r.match(/TEXT:([\s\S]+)/);
+    const diff=diffM?diffM[1]:'';
+    const raw=textM?textM[1].trim():r;
+    if(diff)document.getElementById('diff-badge').innerHTML=`<span class="diff diff-${diff}">${diff}</span>`;
+    renderClozeInto(content,raw);
+    createArticle(text,document.getElementById('src-url').value.trim(),diff);
+    document.getElementById('saved-badge').style.display='inline';
+  }catch(e){content.textContent='生成失敗：'+e.message;}
+  btn.disabled=false;btn.innerHTML='✨ AI 生成克漏字';
+}
+
+function renderClozeInto(container,raw){
+  container.innerHTML='';
+  const parts=raw.split(/(\[BLANK:[^\]]+\]|\[MCQ:[^\]]+\])/g);
+  parts.forEach(p=>{
+    const bM=p.match(/\[BLANK:([^\]]+)\]/);
+    const mM=p.match(/\[MCQ:([^\]]+)\]/);
+    if(bM){
+      const ans=bM[1].trim();
+      const wrap=document.createElement('span');wrap.className='blank-wrap';
+      const inp=document.createElement('input');inp.className='blank-inp';inp.type='text';
+      inp.placeholder='＿＿＿';inp.dataset.answer=ans;inp.dataset.type='blank';
+      inp.style.width=Math.max(80,ans.length*13)+'px';
+      const fb=document.createElement('span');fb.className='blank-fb';
+      wrap.appendChild(inp);wrap.appendChild(fb);container.appendChild(wrap);
+    }else if(mM){
+      const pts=mM[1].split(':');
+      const ans=pts[0].trim();
+      let opts=pts.slice(1).map(x=>x.trim()).filter(Boolean);
+      for(let i=opts.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
+      if(!opts.includes(ans))opts.unshift(ans);
+      const wrap=document.createElement('span');wrap.className='mcq-wrap';wrap.dataset.answer=ans;wrap.dataset.type='mcq';
+      const lbl=document.createElement('div');lbl.className='mcq-label';lbl.textContent='選擇題';
+      const optsDiv=document.createElement('div');optsDiv.className='mcq-opts';
+      opts.forEach(o=>{
+        const btn=document.createElement('button');btn.className='mcq-opt';btn.textContent=o;btn.dataset.value=o;
+        btn.onclick=function(){
+          if(this.classList.contains('ok')||this.classList.contains('bad'))return;
+          wrap.querySelectorAll('.mcq-opt').forEach(x=>x.classList.remove('selected'));
+          this.classList.add('selected');
+        };
+        optsDiv.appendChild(btn);
+      });
+      wrap.appendChild(lbl);wrap.appendChild(optsDiv);container.appendChild(wrap);
+    }else if(p){container.appendChild(document.createTextNode(p));}
+  });
+}
+
+function checkClozeContainer(container,artId,explainContainer){
+  let ok=0,bad=0;
+  container.querySelectorAll('.blank-inp').forEach(inp=>{
+    const ans=inp.dataset.answer.toLowerCase().trim();
+    const val=inp.value.toLowerCase().trim();
+    const fb=inp.nextElementSibling;
+    if(val===ans){inp.classList.add('ok');fb.textContent='✓';fb.className='blank-fb ok show';ok++;saveCard(inp.dataset.answer,true,artId);}
+    else{inp.classList.add('bad');fb.textContent='正解：'+inp.dataset.answer;fb.className='blank-fb bad show';bad++;saveCard(inp.dataset.answer,false,artId);
+      if(explainContainer)addExplainBtn(explainContainer,inp.dataset.answer,val,null);
+    }
+  });
+  container.querySelectorAll('.mcq-wrap').forEach(wrap=>{
+    const ans=wrap.dataset.answer;
+    const selected=wrap.querySelector('.mcq-opt.selected');
+    const val=selected?selected.dataset.value:'';
+    wrap.querySelectorAll('.mcq-opt').forEach(o=>{
+      o.disabled=true;
+      if(o.dataset.value===ans)o.classList.add(val===ans&&o===selected?'ok':'reveal');
+      else if(o===selected)o.classList.add('bad');
+    });
+    if(val===ans){ok++;saveCard(ans,true,artId);}
+    else{bad++;saveCard(ans,false,artId);
+      if(explainContainer)addExplainBtn(explainContainer,ans,val,'mcq');
+    }
+  });
+  return{ok,bad};
+}
+
+function addExplainBtn(container,correctWord,userAnswer,type){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;';
+  const label=document.createElement('span');
+  label.style.cssText='font-size:12px;color:var(--red);';
+  label.textContent=type==='mcq'?`選擇題「${correctWord}」答錯`:`「${correctWord}」填錯${userAnswer?'（你填了：'+userAnswer+'）':''}`;
+  const btn=document.createElement('button');btn.className='btn why';btn.textContent='為什麼？';
+  const explainDiv=document.createElement('div');explainDiv.style.cssText='width:100%;';
+  btn.onclick=async function(){
+    if(explainDiv.innerHTML&&explainDiv.style.display!=='none'){explainDiv.style.display='none';btn.textContent='為什麼？';return;}
+    if(explainDiv.innerHTML){explainDiv.style.display='block';btn.textContent='收起';return;}
+    btn.disabled=true;btn.innerHTML='<span class="spin dk"></span> 解析中...';
+    try{
+      const prompt=type==='mcq'
+        ?`用戶在選擇題中，正確答案是「${correctWord}」，他選了「${userAnswer||'沒有作答'}」。請用繁體中文解釋：1.正確答案的意思和用法 2.為什麼這裡要用這個字 3.跟其他選項的差異 4.一句話記憶技巧`
+        :userAnswer
+          ?`用戶把「${correctWord}」填成「${userAnswer}」。請用繁體中文解釋：1.正確答案的意思 2.用戶的答案哪裡不對 3.一句話記憶技巧`
+          :`用戶沒有填「${correctWord}」。請用繁體中文解釋這個字的意思、用法和一句話記憶技巧`;
+      const ctx=lang==='jp'?'這是日文語言學習。':'這是英文語言學習。';
+      const r=await callClaude('你是語言學習教師，解釋簡潔有條理，用繁體中文回答，最多120字。'+ctx,prompt);
+      explainDiv.innerHTML=`<div class="explain-box">${r}</div>`;
+      btn.textContent='收起';btn.disabled=false;
+    }catch(e){explainDiv.innerHTML='<div class="explain-box">解析失敗，請再試一次。</div>';btn.disabled=false;btn.textContent='為什麼？';}
+  };
+  row.appendChild(label);row.appendChild(btn);container.appendChild(row);container.appendChild(explainDiv);
+}
+
+function checkAnswers(){
+  if(practiceChecked)return;
+  practiceChecked=true;
+  document.getElementById('check-btn').disabled=true;
+  const container=document.getElementById('cloze-content');
+  const old=document.getElementById('explain-area');if(old)old.remove();
+  const explainArea=document.createElement('div');explainArea.id='explain-area';
+  const{ok,bad}=checkClozeContainer(container,currentArticleId,explainArea);
+  document.getElementById('sc-ok').textContent=ok;
+  document.getElementById('sc-bad').textContent=bad;
+  document.getElementById('score-area').style.display='flex';
+  document.getElementById('trans-btn').style.display='inline-flex';
+  document.getElementById('cloze-card').appendChild(explainArea);
+  renderFCMini();
+  const wrongBlank=container.querySelector('.blank-inp.bad');
+  if(wrongBlank)lookupWord(wrongBlank.dataset.answer);
+}
+
+function resetCloze(){
+  practiceChecked=false;
+  document.querySelectorAll('#cloze-content .blank-inp').forEach(i=>{i.value='';i.classList.remove('ok','bad');});
+  document.querySelectorAll('#cloze-content .blank-fb').forEach(f=>f.classList.remove('show'));
+  document.querySelectorAll('#cloze-content .mcq-opt').forEach(o=>{o.classList.remove('selected','ok','bad','reveal');o.disabled=false;});
+  document.getElementById('score-area').style.display='none';
+  document.getElementById('trans-btn').style.display='none';
+  document.getElementById('trans-box').style.display='none';
+  document.getElementById('check-btn').disabled=false;
+  const ea=document.getElementById('explain-area');if(ea)ea.remove();
+  transShowing=false;
+}
+
+async function toggleTrans(){
+  const box=document.getElementById('trans-box'),btn=document.getElementById('trans-btn');
+  if(transShowing){box.style.display='none';btn.textContent='顯示中文翻譯';transShowing=false;return;}
+  box.style.display='block';transShowing=true;btn.textContent='收起翻譯';
+  if(transCache){box.textContent=transCache;return;}
+  box.innerHTML='<span class="spin dk"></span> 翻譯中...';
+  try{transCache=await callClaude('你是翻譯助手，把文章翻譯成繁體中文，只輸出翻譯。',document.getElementById('text-input').value.trim());box.textContent=transCache;}
+  catch(e){box.textContent='翻譯失敗，請再試一次。';}
+}
+
+async function generateSummary(){
+  const text=document.getElementById('text-input').value.trim();if(!text){toast('請先貼上文字內容');return;}
+  const btn=document.getElementById('btn-sum');btn.disabled=true;btn.innerHTML='<span class="spin dk"></span> 摘要中...';
+  document.getElementById('summary-card').style.display='block';
+  document.getElementById('summary-content').innerHTML='<span class="spin dk"></span>';
+  try{
+    const r=await callClaude(`你是語言學習助手。請用繁體中文整理這篇${lang==='jp'?'日文':'英文'}文章的重點摘要（3-5點），幫助學習者理解上下文。`,text);
+    document.getElementById('summary-content').textContent=r;
+    if(currentArticleId){const a=window.articles.find(x=>x.id===currentArticleId);if(a){a.summary=r.slice(0,300);window.scheduleSave();}}
+  }catch(e){document.getElementById('summary-content').textContent='摘要失敗，請再試一次。';}
+  btn.disabled=false;btn.innerHTML='📄 摘要';
+}
+
+function saveNote(){
+  const note=document.getElementById('note-input').value;
+  if(currentArticleId){const a=window.articles.find(x=>x.id===currentArticleId);if(a){a.note=note;window.scheduleSave();}}
+  toast('筆記已儲存！');
+}
+
+// ── Dictionary ──
+async function lookupWord(word){
+  const el=document.getElementById('dict-content');
+  el.innerHTML=`<div style="display:flex;align-items:baseline;gap:8px;"><span class="badge">${lang==='jp'?'JP':'EN'}</span><span class="dict-word">${word}</span></div><div style="color:var(--t3);font-size:13px;margin-top:8px;"><span class="spin dk"></span> 查詢中...</div>`;
+  try{
+    const r=await callClaude('你是字典助手，只輸出JSON（不要markdown）：{"pron":"發音或假名","pos":"詞性","def":"中文解釋15字內","examples":["例句1","例句2","例句3"]}',
+      lang==='jp'?`查詢日文單字：${word}`:`查詢英文單字：${word}`);
+    const d=JSON.parse(r.replace(/```json|```/g,'').trim());
+    el.innerHTML=`<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;"><span class="badge">${lang==='jp'?'JP':'EN'}</span><span class="dict-word">${word}</span></div>
+      <div class="dict-pron">${d.pron||''}</div><span class="badge">${d.pos||''}</span>
+      <div class="dict-def">${d.def||''}</div><div class="lbl" style="margin-top:12px;">例句</div>
+      ${(d.examples||[]).map(ex=>`<div class="ex-item">${ex}</div>`).join('')}
+      <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;">
+        <button class="btn sm" onclick="speak('${word}')">🔊 發音</button>
+        <button class="btn sm" onclick="saveCard('${word}',null,currentArticleId);renderFCMini();toast('已存入字卡庫');">＋ 存字卡</button>
+      </div>`;
+  }catch(e){el.innerHTML=`<div class="dict-word">${word}</div><div style="color:var(--t3);font-size:13px;margin-top:8px;">查詢失敗，請再試一次</div>`;}
+}
+function speak(word){if('speechSynthesis'in window){const u=new SpeechSynthesisUtterance(word);u.lang=lang==='jp'?'ja-JP':'en-US';speechSynthesis.speak(u);}}
+
+// ── Review ──
+function renderReview(){
+  const lc=langCards();document.getElementById('rv-prog').textContent=`共 ${lc.length} 張字卡`;
+  document.getElementById('start-area').style.display=lc.length?'block':'none';
+  if(!lc.length)document.getElementById('flip-front').textContent='還沒有字卡';
+}
+function setMode(m){
+  reviewMode=m;
+  document.getElementById('review-flip').style.display=m==='flip'?'block':'none';
+  document.getElementById('review-cloze').style.display=m==='cloze'?'block':'none';
+  document.getElementById('mode-flip').style.background=m==='flip'?'var(--a)':'transparent';
+  document.getElementById('mode-flip').style.color=m==='flip'?'#fff':'var(--t2)';
+  document.getElementById('mode-cloze').style.background=m==='cloze'?'var(--a)':'transparent';
+  document.getElementById('mode-cloze').style.color=m==='cloze'?'#fff':'var(--t2)';
+  if(m==='cloze')buildReviewCloze();
+}
+function startReview(){
+  reviewQueue=weightedShuffle(langCards());reviewIdx=0;reviewOk=0;reviewBad=0;isFlipped=false;started=true;
+  document.getElementById('start-area').style.display='none';
+  document.getElementById('result-row').style.display='none';
+  document.getElementById('flip-hint').style.display='block';
+  document.getElementById('art-links').style.display='none';
+  showCard();
+}
+function showCard(){
+  if(reviewIdx>=reviewQueue.length){
+    document.getElementById('flip-front').textContent='複習完畢！';
+    document.getElementById('flip-front').style.display='block';
+    document.getElementById('flip-back').style.display='none';
+    document.getElementById('result-row').style.display='none';
+    document.getElementById('art-links').style.display='none';
+    const sa=document.getElementById('start-area');sa.style.display='block';sa.querySelector('button').textContent='再複習一次';
+    return;
+  }
+  const c=reviewQueue[reviewIdx];
+  document.getElementById('flip-front').textContent=c.word;
+  document.getElementById('fb-word').textContent=c.word;
+  document.getElementById('fb-def').textContent=c.def||'（去字典查詢可取得字義）';
+  document.getElementById('fb-ex').textContent=(c.examples&&c.examples[0])||'';
+  document.getElementById('flip-front').style.display='block';
+  document.getElementById('flip-back').style.display='none';
+  document.getElementById('result-row').style.display='none';
+  document.getElementById('art-links').style.display='none';
+  document.getElementById('flip-hint').style.display='block';
+  isFlipped=false;
+  document.getElementById('rv-prog').textContent=`第 ${reviewIdx+1} 張，共 ${reviewQueue.length} 張`;
+  document.getElementById('rv-score').textContent=`本次：正確 ${reviewOk} / 錯誤 ${reviewBad}`;
+}
+function flipCard(){
+  if(isFlipped||!started||reviewIdx>=reviewQueue.length)return;
+  isFlipped=true;
+  document.getElementById('flip-front').style.display='none';
+  document.getElementById('flip-back').style.display='flex';
+  document.getElementById('result-row').style.display='flex';
+  document.getElementById('flip-hint').style.display='none';
+  const c=reviewQueue[reviewIdx];
+  if((c.articleIds||[]).length){
+    const el=document.getElementById('art-links');
+    el.style.cssText='display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:var(--t3);';
+    el.innerHTML='原文：'+(c.articleIds||[]).map(id=>{const a=window.articles.find(x=>x.id===id);return a?`<span class="art-tag" onclick="goToArticle('${id}')">📄 ${fmtDate(a.createdAt)}</span>`:''}).join('');
+  }
+}
+function reviewResult(knew){
+  const c=reviewQueue[reviewIdx];
+  if(knew){c.correct++;c.streak=(c.streak||0)+1;reviewOk++;}else{c.wrong++;c.streak=0;reviewBad++;}
+  window.scheduleSave();
+  reviewIdx++;setTimeout(showCard,300);
+}
+function buildReviewCloze(){
+  const lc=langCards(),el=document.getElementById('rv-cloze');
+  if(!lc.length){el.innerHTML='<div class="empty" style="padding:20px 0;">字卡庫有字卡後才能進行克漏字複習</div>';return;}
+  const sample=weightedShuffle(lc).slice(0,5);
+  el.innerHTML='';
+  const box=document.createElement('div');box.className='cloze-box';
+  sample.forEach(c=>{
+    const ex=c.examples&&c.examples[0]?c.examples[0]:null;
+    const text=ex&&ex.toLowerCase().includes(c.word.toLowerCase())?ex.replace(new RegExp(c.word,'gi'),`[BLANK:${c.word}]`):`[BLANK:${c.word}]`;
+    const parts=text.split(/(\[BLANK:[^\]]+\])/g);let replaced=false;
+    parts.forEach(p=>{
+      const m=p.match(/\[BLANK:([^\]]+)\]/);
+      if(m&&!replaced){replaced=true;const ans=m[1];const wrap=document.createElement('span');wrap.className='blank-wrap';const inp=document.createElement('input');inp.className='blank-inp';inp.type='text';inp.placeholder='＿＿＿';inp.dataset.answer=ans;inp.style.width=Math.max(80,ans.length*13)+'px';const fb=document.createElement('span');fb.className='blank-fb';wrap.appendChild(inp);wrap.appendChild(fb);box.appendChild(wrap);}
+      else{box.appendChild(document.createTextNode(p));}
+    });
+    box.appendChild(document.createElement('br'));box.appendChild(document.createElement('br'));
+  });
+  el.appendChild(box);
+  const explainDiv=document.createElement('div');
+  const row=document.createElement('div');row.className='check-row';
+  const newBtn=document.createElement('button');newBtn.className='btn';newBtn.textContent='換一組';newBtn.onclick=buildReviewCloze;
+  const checkBtn=document.createElement('button');checkBtn.className='btn pri';checkBtn.style.cssText='background:var(--a);border-color:var(--a);';checkBtn.textContent='批改答案';
+  checkBtn.onclick=()=>{checkBtn.disabled=true;explainDiv.innerHTML='';checkClozeContainer(box,null,explainDiv);renderFCMini();};
+  row.appendChild(newBtn);row.appendChild(checkBtn);el.appendChild(row);el.appendChild(explainDiv);
+}
+
+// ── Chat ──
+function toggleChat(){document.getElementById('ai-panel').classList.toggle('open');}
+async function sendChat(){
+  const inp=document.getElementById('ai-input');const msg=inp.value.trim();if(!msg)return;inp.value='';
+  const msgs=document.getElementById('ai-msgs');
+  const uDiv=document.createElement('div');uDiv.className='ai-msg user';uDiv.textContent=msg;msgs.appendChild(uDiv);msgs.scrollTop=msgs.scrollHeight;
+  const tDiv=document.createElement('div');tDiv.className='ai-msg bot';tDiv.textContent='思考中...';msgs.appendChild(tDiv);
+  chatHistory.push({role:'user',content:msg});
+  try{
+    const text=document.getElementById('text-input').value.trim();
+    const ctx=text?`\n\n用戶正在學習的文章：\n${text.slice(0,400)}`:'';
+    const r=await callClaude(`你是友善的${lang==='jp'?'日文':'英文'}語言學習助手，用繁體中文回答語言問題，回答簡潔清楚。${ctx}`,msg,chatHistory.slice(0,-1));
+    tDiv.textContent=r;chatHistory.push({role:'assistant',content:r});
+  }catch(e){tDiv.textContent='回應失敗，請再試一次。';chatHistory.pop();}
+  msgs.scrollTop=msgs.scrollHeight;
+}
+</script>
+</body>
+</html>
