@@ -392,26 +392,71 @@ function renderFCFull(){
   document.getElementById('fc-total').textContent=`共 ${lc.length} 張`;
   const el=document.getElementById('fc-full');
   if(!lc.length){el.innerHTML='<div class="empty" style="padding:60px 0;">還沒有字卡！</div>';return;}
-  el.innerHTML=lc.map(c=>{
+  el.innerHTML=lc.map((c,i)=>{
     const t=c.correct+c.wrong,w=getWeight(c),dc=!t?'var(--t3)':c.correct/t>=0.6?'var(--green)':'var(--red)';
     const artLinks=(c.articleIds||[]).map(id=>{const a=window.articles.find(x=>x.id===id);return a?`<span class="art-tag" onclick="goToArticle('${id}')">📄 ${fmtDate(a.createdAt)}</span>`:''}).join('');
-    return`<div class="card" style="margin-bottom:10px;">
+    const idx=window.cards.indexOf(c);
+    return`<div class="card" style="margin-bottom:10px;" id="fc-card-${idx}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
         <div style="flex:1;">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
             <span style="font-size:18px;font-weight:700;">${c.word}</span>
+            ${c.pron?`<span style="font-size:11px;color:var(--t3);font-family:monospace;">${c.pron}</span>`:''}
             <span style="font-size:10px;padding:2px 6px;border-radius:10px;background:var(--sur2);color:var(--t3);border:1px solid var(--bd);">出現率 ${w}%</span>
             ${(c.articleIds||[]).length?`<span style="font-size:10px;padding:2px 6px;border-radius:10px;background:var(--al);color:var(--a);">出現在 ${c.articleIds.length} 篇文章</span>`:''}
           </div>
-          ${artLinks?`<div style="margin-top:4px;">${artLinks}</div>`:''}
+          ${c.def?`<div style="font-size:13px;color:var(--t2);margin-bottom:6px;">${c.def}</div>`:'<div style="font-size:12px;color:var(--t3);margin-bottom:6px;">（尚無字義，翻卡時會自動查詢）</div>'}
+          ${c.examples&&c.examples[0]?`<div style="font-size:12px;color:var(--t3);border-left:2px solid var(--bd2);padding-left:8px;">${c.examples[0]}</div>`:''}
+          ${artLinks?`<div style="margin-top:6px;">${artLinks}</div>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <span style="font-size:11px;color:var(--t3);display:flex;align-items:center;gap:4px;"><span class="dot" style="background:${dc};"></span>${!t?'新字卡':c.correct+'/'+t+' 正確'}</span>
+          <button class="btn sm" onclick="editCard(${idx})">編輯</button>
           <button class="btn sm" onclick="removeCard('${c.word}')">刪除</button>
+        </div>
+      </div>
+      <div id="fc-edit-${idx}" style="display:none;margin-top:12px;border-top:1px solid var(--bd);padding-top:12px;">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div>
+            <div class="lbl">發音</div>
+            <input class="inp" id="fc-pron-${idx}" value="${c.pron||''}" placeholder="例：/ɪmˈpruːv/ 或 かいぜん">
+          </div>
+          <div>
+            <div class="lbl">中文字義</div>
+            <input class="inp" id="fc-def-${idx}" value="${c.def||''}" placeholder="例：改善；提升">
+          </div>
+          <div>
+            <div class="lbl">例句</div>
+            <input class="inp" id="fc-ex0-${idx}" value="${c.examples&&c.examples[0]?c.examples[0]:''}" placeholder="例句 1">
+            <input class="inp" id="fc-ex1-${idx}" value="${c.examples&&c.examples[1]?c.examples[1]:''}" placeholder="例句 2" style="margin-top:6px;">
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn sm" onclick="editCard(${idx})">取消</button>
+            <button class="btn sm pri" onclick="saveCardEdit(${idx})" style="background:var(--a);border-color:var(--a);color:#fff;">儲存</button>
+          </div>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+function editCard(idx){
+  const editDiv=document.getElementById('fc-edit-'+idx);
+  if(!editDiv)return;
+  editDiv.style.display=editDiv.style.display==='none'?'block':'none';
+}
+
+function saveCardEdit(idx){
+  const c=window.cards[idx];
+  if(!c)return;
+  c.pron=document.getElementById('fc-pron-'+idx).value.trim();
+  c.def=document.getElementById('fc-def-'+idx).value.trim();
+  const ex0=document.getElementById('fc-ex0-'+idx).value.trim();
+  const ex1=document.getElementById('fc-ex1-'+idx).value.trim();
+  c.examples=[ex0,ex1].filter(Boolean);
+  window.scheduleSave();
+  renderFCFull();
+  toast('字卡已儲存！');
 }
 
 function removeCard(word){
@@ -489,7 +534,7 @@ async function reCloze(id){
   area.style.display='block';content.innerHTML='<span class="spin dk"></span> 生成中...';
   document.getElementById('art-check-btn').disabled=false;
   document.getElementById('art-explains').innerHTML='';
-  try{const r=await callClaude(buildClozePrompt(),a.text);renderClozeInto(content,r);}
+  try{const r=await callClaude(buildClozePrompt(a.text),a.text);renderClozeInto(content,r);}
   catch(e){content.textContent='生成失敗，請再試一次。';}
 }
 function resetArtCloze(){
@@ -499,11 +544,37 @@ function resetArtCloze(){
   document.getElementById('art-check-btn').disabled=false;
   document.getElementById('art-explains').innerHTML='';
 }
-function checkArtCloze(artId){
+async function checkArtCloze(artId){
   document.getElementById('art-check-btn').disabled=true;
   const explains=document.getElementById('art-explains');explains.innerHTML='';
-  checkClozeContainer(document.getElementById('art-cloze-content'),artId,explains);
+  const{ok,bad,errors}=checkClozeContainer(document.getElementById('art-cloze-content'),artId);
   renderFCMini();
+  if(errors.length>0){
+    const btn=document.createElement('button');btn.className='btn';
+    btn.style.cssText='background:var(--purple-l);color:var(--purple);border-color:var(--purple-m);width:100%;justify-content:center;margin-top:10px;';
+    btn.innerHTML='💡 解析本次所有錯誤（共 '+errors.length+' 題）';
+    const resultDiv=document.createElement('div');
+    btn.onclick=async function(){
+      if(resultDiv.innerHTML){resultDiv.style.display=resultDiv.style.display==='none'?'block':'none';return;}
+      btn.disabled=true;btn.innerHTML='<span class="spin dk"></span> AI 解析中...';
+      try{
+        const errList=errors.map((e,i)=>{
+          if(e.type==='mcq')return`${i+1}. 選擇題正確答案「${e.correct}」，你選了「${e.user||'沒有作答'}」`;
+          return`${i+1}. 填空正確答案「${e.correct}」，你填了「${e.user||'沒有作答'}」`;
+        }).join('
+');
+        const ctx=lang==='jp'?'這是日文語言學習。':'這是英文語言學習。';
+        const r=await callClaude(
+          `你是語言學習教師，用繁體中文解析學生答錯的題目。每題解析：1.正確答案的意思 2.為什麼這裡用這個字/選這個選項 3.一句話記憶技巧。每題之間空一行，格式清晰。${ctx}`,
+          `學生答錯了以下題目，請逐題解析：
+${errList}`
+        );
+        resultDiv.innerHTML='<div class="explain-box" style="white-space:pre-wrap;">'+r+'</div>';
+        btn.innerHTML='收起解析';btn.disabled=false;
+      }catch(e){resultDiv.innerHTML='<div class="explain-box">解析失敗，請再試一次。</div>';btn.disabled=false;btn.innerHTML='💡 解析本次所有錯誤';}
+    };
+    explains.appendChild(btn);explains.appendChild(resultDiv);
+  }
 }
 function deleteArticle(id){
   window.articles=window.articles.filter(a=>a.id!==id);
@@ -511,24 +582,67 @@ function deleteArticle(id){
 }
 
 // ── Cloze ──
-function buildClozePrompt(){
+function cleanTranscript(text){
+  // 清理各種時間戳記格式
+  let cleaned = text
+    // YouTube 中文時間戳記：0:077秒钟、1:041分钟4秒钟
+    .replace(/\d+:\d+分钟\d+秒钟/g, '')
+    .replace(/\d+:\d+秒钟/g, '')
+    .replace(/\d+分钟\d+秒钟/g, '')
+    // 英文時間戳記：0:07、1:23:45
+    .replace(/\d{1,2}:\d{2}:\d{2}/g, '')
+    .replace(/\d{1,2}:\d{2}/g, '')
+    // 章節標題保留但移除多餘格式
+    .replace(/第\s*\d+\s*章[：:：]/g, '
+
+')
+    // 清理多餘空白和換行
+    .replace(/
+{3,}/g, '
+
+')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  return cleaned;
+}
+
+function buildClozePrompt(text){
   const isJP=lang==='jp';
+  // 依文章長度決定挖空數量
+  let targetBlanks;
+  if(isJP){
+    const charCount=text.length;
+    if(charCount<=150) targetBlanks='8-10';
+    else if(charCount<=300) targetBlanks='12-15';
+    else if(charCount<=500) targetBlanks='18-22';
+    else targetBlanks='25-30';
+  }else{
+    const wordCount=text.split(/\s+/).filter(Boolean).length;
+    if(wordCount<=100) targetBlanks='8-10';
+    else if(wordCount<=200) targetBlanks='12-15';
+    else if(wordCount<=350) targetBlanks='18-22';
+    else targetBlanks='25-30';
+  }
   return`你是語言學習助手。分析文章並生成克漏字練習。
 規則：
-1. 挑 4-6 個單字，分兩種類型：
+1. 挑 ${targetBlanks} 個單字（依文章長度決定），分兩種類型：
    - 一般填空：用 [BLANK:答案] 標記
-   - 易混淆選擇題：用 [MCQ:答案:選項A:選項B:選項C] 標記（共4個選項含答案）
-2. 易混淆詞：${isJP?'助詞(は/が/を/に/で)、同音異義詞、動詞変化':'affect/effect、rise/raise、fewer/less、since/for、make/do 等'}
-3. 每篇至少 1-2 題選擇題
-4. 評估難度 A1/A2/B1/B2/C1/C2
-5. 只輸出下面格式：
+   - 易混淆選擇題：用 [MCQ:答案:選項A:選項B:選項C] 標記（共4個選項含答案，選項隨機排列）
+2. 易混淆詞：${isJP?'助詞(は/が/を/に/で)、同音異義詞、動詞変化':'affect/effect、rise/raise、fewer/less、since/for、make/do、其他容易混淆的詞'}
+3. 每篇至少 25% 題選擇題，其餘填空
+4. 平均分散在文章各段落，保留足夠前後文線索
+5. 評估難度 A1/A2/B1/B2/C1/C2
+6. 只輸出下面格式：
 DIFFICULTY:B1
 TEXT:文章內容含[BLANK:單字]和[MCQ:答案:選A:選B:選C]...`;
 }
 
 async function generateCloze(){
-  const text=document.getElementById('text-input').value.trim();
-  if(!text){toast('請先貼上文字內容');return;}
+  const rawText=document.getElementById('text-input').value.trim();
+  if(!rawText){toast('請先貼上文字內容');return;}
+  const text=cleanTranscript(rawText);
+  // 更新輸入框顯示清理後的文字
+  document.getElementById('text-input').value=text;
   const btn=document.getElementById('btn-cloze');
   btn.disabled=true;btn.innerHTML='<span class="spin"></span> 生成中...';
   document.getElementById('cloze-card').style.display='block';
@@ -542,7 +656,7 @@ async function generateCloze(){
   const content=document.getElementById('cloze-content');
   content.innerHTML='<span class="spin dk"></span> AI 分析中...';
   try{
-    const r=await callClaude(buildClozePrompt(),text);
+    const r=await callClaude(buildClozePrompt(text),text);
     const diffM=r.match(/DIFFICULTY:([A-C][12])/);
     const textM=r.match(/TEXT:([\s\S]+)/);
     const diff=diffM?diffM[1]:'';
@@ -592,15 +706,16 @@ function renderClozeInto(container,raw){
   });
 }
 
-function checkClozeContainer(container,artId,explainContainer){
+function checkClozeContainer(container,artId){
   let ok=0,bad=0;
+  const errors=[];
   container.querySelectorAll('.blank-inp').forEach(inp=>{
     const ans=inp.dataset.answer.toLowerCase().trim();
     const val=inp.value.toLowerCase().trim();
     const fb=inp.nextElementSibling;
     if(val===ans){inp.classList.add('ok');fb.textContent='✓';fb.className='blank-fb ok show';ok++;saveCard(inp.dataset.answer,true,artId);}
     else{inp.classList.add('bad');fb.textContent='正解：'+inp.dataset.answer;fb.className='blank-fb bad show';bad++;saveCard(inp.dataset.answer,false,artId);
-      if(explainContainer)addExplainBtn(explainContainer,inp.dataset.answer,val,null);
+      errors.push({type:'blank',correct:inp.dataset.answer,user:inp.value.trim()});
     }
   });
   container.querySelectorAll('.mcq-wrap').forEach(wrap=>{
@@ -614,37 +729,10 @@ function checkClozeContainer(container,artId,explainContainer){
     });
     if(val===ans){ok++;saveCard(ans,true,artId);}
     else{bad++;saveCard(ans,false,artId);
-      if(explainContainer)addExplainBtn(explainContainer,ans,val,'mcq');
+      errors.push({type:'mcq',correct:ans,user:val});
     }
   });
-  return{ok,bad};
-}
-
-function addExplainBtn(container,correctWord,userAnswer,type){
-  const row=document.createElement('div');
-  row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;';
-  const label=document.createElement('span');
-  label.style.cssText='font-size:12px;color:var(--red);';
-  label.textContent=type==='mcq'?`選擇題「${correctWord}」答錯`:`「${correctWord}」填錯${userAnswer?'（你填了：'+userAnswer+'）':''}`;
-  const btn=document.createElement('button');btn.className='btn why';btn.textContent='為什麼？';
-  const explainDiv=document.createElement('div');explainDiv.style.cssText='width:100%;';
-  btn.onclick=async function(){
-    if(explainDiv.innerHTML&&explainDiv.style.display!=='none'){explainDiv.style.display='none';btn.textContent='為什麼？';return;}
-    if(explainDiv.innerHTML){explainDiv.style.display='block';btn.textContent='收起';return;}
-    btn.disabled=true;btn.innerHTML='<span class="spin dk"></span> 解析中...';
-    try{
-      const prompt=type==='mcq'
-        ?`用戶在選擇題中，正確答案是「${correctWord}」，他選了「${userAnswer||'沒有作答'}」。請用繁體中文解釋：1.正確答案的意思和用法 2.為什麼這裡要用這個字 3.跟其他選項的差異 4.一句話記憶技巧`
-        :userAnswer
-          ?`用戶把「${correctWord}」填成「${userAnswer}」。請用繁體中文解釋：1.正確答案的意思 2.用戶的答案哪裡不對 3.一句話記憶技巧`
-          :`用戶沒有填「${correctWord}」。請用繁體中文解釋這個字的意思、用法和一句話記憶技巧`;
-      const ctx=lang==='jp'?'這是日文語言學習。':'這是英文語言學習。';
-      const r=await callClaude('你是語言學習教師，解釋簡潔有條理，用繁體中文回答，最多120字。'+ctx,prompt);
-      explainDiv.innerHTML=`<div class="explain-box">${r}</div>`;
-      btn.textContent='收起';btn.disabled=false;
-    }catch(e){explainDiv.innerHTML='<div class="explain-box">解析失敗，請再試一次。</div>';btn.disabled=false;btn.textContent='為什麼？';}
-  };
-  row.appendChild(label);row.appendChild(btn);container.appendChild(row);container.appendChild(explainDiv);
+  return{ok,bad,errors};
 }
 
 function checkAnswers(){
@@ -653,16 +741,45 @@ function checkAnswers(){
   document.getElementById('check-btn').disabled=true;
   const container=document.getElementById('cloze-content');
   const old=document.getElementById('explain-area');if(old)old.remove();
-  const explainArea=document.createElement('div');explainArea.id='explain-area';
-  const{ok,bad}=checkClozeContainer(container,currentArticleId,explainArea);
+  const{ok,bad,errors}=checkClozeContainer(container,currentArticleId);
   document.getElementById('sc-ok').textContent=ok;
   document.getElementById('sc-bad').textContent=bad;
   document.getElementById('score-area').style.display='flex';
   document.getElementById('trans-btn').style.display='inline-flex';
-  document.getElementById('cloze-card').appendChild(explainArea);
   renderFCMini();
   const wrongBlank=container.querySelector('.blank-inp.bad');
   if(wrongBlank)lookupWord(wrongBlank.dataset.answer);
+  // 批改後自動跑翻譯+摘要（合併一次API）
+  autoTransSummary();
+  if(errors.length>0){
+    const explainArea=document.createElement('div');explainArea.id='explain-area';
+    explainArea.style.cssText='margin-top:14px;';
+    const btn=document.createElement('button');btn.className='btn';
+    btn.style.cssText='background:var(--purple-l);color:var(--purple);border-color:var(--purple-m);width:100%;justify-content:center;';
+    btn.innerHTML='💡 解析本次所有錯誤（共 '+errors.length+' 題）';
+    const resultDiv=document.createElement('div');
+    btn.onclick=async function(){
+      if(resultDiv.innerHTML){resultDiv.style.display=resultDiv.style.display==='none'?'block':'none';btn.textContent=resultDiv.style.display==='none'?'💡 查看解析':'收起解析';return;}
+      btn.disabled=true;btn.innerHTML='<span class="spin dk"></span> AI 解析中...';
+      try{
+        const errList=errors.map((e,i)=>{
+          if(e.type==='mcq')return`${i+1}. 選擇題正確答案「${e.correct}」，你選了「${e.user||'沒有作答'}」`;
+          return`${i+1}. 填空正確答案「${e.correct}」，你填了「${e.user||'沒有作答'}」`;
+        }).join('
+');
+        const ctx=lang==='jp'?'這是日文語言學習。':'這是英文語言學習。';
+        const r=await callClaude(
+          `你是語言學習教師，用繁體中文解析學生答錯的題目。每題解析：1.正確答案的意思 2.為什麼這裡用這個字/選這個選項 3.一句話記憶技巧。每題之間空一行，格式清晰。${ctx}`,
+          `學生答錯了以下題目，請逐題解析：
+${errList}`
+        );
+        resultDiv.innerHTML='<div class="explain-box" style="white-space:pre-wrap;">'+r+'</div>';
+        btn.innerHTML='收起解析';btn.disabled=false;
+      }catch(e){resultDiv.innerHTML='<div class="explain-box">解析失敗，請再試一次。</div>';btn.disabled=false;btn.innerHTML='💡 解析本次所有錯誤';}
+    };
+    explainArea.appendChild(btn);explainArea.appendChild(resultDiv);
+    document.getElementById('cloze-card').appendChild(explainArea);
+  }
 }
 
 function resetCloze(){
@@ -676,6 +793,48 @@ function resetCloze(){
   document.getElementById('check-btn').disabled=false;
   const ea=document.getElementById('explain-area');if(ea)ea.remove();
   transShowing=false;
+}
+
+async function autoTransSummary(){
+  const text=document.getElementById('text-input').value.trim();
+  if(!text)return;
+  // 顯示翻譯和摘要區塊
+  document.getElementById('trans-box').style.display='block';
+  document.getElementById('trans-box').innerHTML='<span class="spin dk"></span> 翻譯＋摘要生成中...';
+  document.getElementById('summary-card').style.display='block';
+  document.getElementById('summary-content').innerHTML='<span class="spin dk"></span>';
+  try{
+    const isJP=lang==='jp';
+    const r=await callClaude(
+      `你是語言學習助手。請同時完成兩件事：
+1. 把這篇${isJP?'日文':'英文'}文章完整翻譯成繁體中文
+2. 用繁體中文整理 3-5 點重點摘要
+
+只輸出以下格式，不要其他說明：
+TRANSLATION:
+（翻譯內容）
+SUMMARY:
+（摘要內容）`,
+      text
+    );
+    const transMatch=r.match(/TRANSLATION:\s*([\s\S]*?)(?=SUMMARY:|$)/);
+    const summaryMatch=r.match(/SUMMARY:\s*([\s\S]*?)$/);
+    const trans=transMatch?transMatch[1].trim():'翻譯失敗';
+    const summary=summaryMatch?summaryMatch[1].trim():'摘要失敗';
+    transCache=trans;
+    document.getElementById('trans-box').textContent=trans;
+    document.getElementById('trans-btn').style.display='inline-flex';
+    document.getElementById('trans-btn').textContent='收起翻譯';
+    transShowing=true;
+    document.getElementById('summary-content').textContent=summary;
+    if(currentArticleId){
+      const a=window.articles.find(x=>x.id===currentArticleId);
+      if(a){a.summary=summary.slice(0,300);window.scheduleSave();}
+    }
+  }catch(e){
+    document.getElementById('trans-box').textContent='翻譯失敗，請再試一次。';
+    document.getElementById('summary-content').textContent='摘要失敗，請再試一次。';
+  }
 }
 
 async function toggleTrans(){
@@ -775,7 +934,7 @@ function showCard(){
   document.getElementById('rv-prog').textContent=`第 ${reviewIdx+1} 張，共 ${reviewQueue.length} 張`;
   document.getElementById('rv-score').textContent=`本次：正確 ${reviewOk} / 錯誤 ${reviewBad}`;
 }
-function flipCard(){
+async function flipCard(){
   if(isFlipped||!started||reviewIdx>=reviewQueue.length)return;
   isFlipped=true;
   document.getElementById('flip-front').style.display='none';
@@ -783,10 +942,36 @@ function flipCard(){
   document.getElementById('result-row').style.display='flex';
   document.getElementById('flip-hint').style.display='none';
   const c=reviewQueue[reviewIdx];
+  // 顯示原文連結
   if((c.articleIds||[]).length){
     const el=document.getElementById('art-links');
     el.style.cssText='display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;font-size:11px;color:var(--t3);';
     el.innerHTML='原文：'+(c.articleIds||[]).map(id=>{const a=window.articles.find(x=>x.id===id);return a?`<span class="art-tag" onclick="goToArticle('${id}')">📄 ${fmtDate(a.createdAt)}</span>`:''}).join('');
+  }
+  // 如果字卡還沒有字義，自動查字典並存進去
+  if(!c.def||!c.examples||!c.examples.length){
+    document.getElementById('fb-def').innerHTML='<span class="spin dk"></span> 查詢中...';
+    try{
+      const r=await callClaude(
+        '你是字典助手，只輸出JSON（不要markdown）：{"pron":"發音或假名","pos":"詞性","def":"中文解釋15字內","examples":["例句1","例句2","例句3"]}',
+        lang==='jp'?`查詢日文單字：${c.word}`:`查詢英文單字：${c.word}`
+      );
+      const d=JSON.parse(r.replace(/```json|```/g,'').trim());
+      c.def=d.def||'';
+      c.pron=d.pron||'';
+      c.pos=d.pos||'';
+      c.examples=d.examples||[];
+      window.scheduleSave();
+      document.getElementById('fb-word').textContent=c.word;
+      document.getElementById('fb-def').innerHTML=`<span style="font-size:11px;color:var(--t3);font-family:monospace;">${c.pron}</span><br>${c.def}`;
+      document.getElementById('fb-ex').textContent=c.examples[0]||'';
+    }catch(e){
+      document.getElementById('fb-def').textContent='查詢失敗，請再試一次';
+    }
+  }else{
+    document.getElementById('fb-word').textContent=c.word;
+    document.getElementById('fb-def').innerHTML=`<span style="font-size:11px;color:var(--t3);font-family:monospace;">${c.pron||''}</span><br>${c.def}`;
+    document.getElementById('fb-ex').textContent=c.examples[0]||'';
   }
 }
 function reviewResult(knew){
@@ -803,7 +988,26 @@ function buildReviewCloze(){
   const box=document.createElement('div');box.className='cloze-box';
   sample.forEach(c=>{
     const ex=c.examples&&c.examples[0]?c.examples[0]:null;
-    const text=ex&&ex.toLowerCase().includes(c.word.toLowerCase())?ex.replace(new RegExp(c.word,'gi'),`[BLANK:${c.word}]`):`[BLANK:${c.word}]`;
+    let text;
+    if(ex&&ex.toLowerCase().includes(c.word.toLowerCase())){
+      text=ex.replace(new RegExp(c.word,'gi'),`[BLANK:${c.word}]`);
+    }else if(ex){
+      // 有例句但字不在例句裡，顯示例句當提示，另起一行填空
+      const hint=document.createElement('div');
+      hint.style.cssText='font-size:12px;color:var(--t3);margin-bottom:4px;font-style:italic;';
+      hint.textContent='💡 提示：'+ex;
+      box.appendChild(hint);
+      text=`[BLANK:${c.word}]`;
+    }else if(c.def){
+      // 沒有例句但有字義，用字義當提示
+      const hint=document.createElement('div');
+      hint.style.cssText='font-size:12px;color:var(--t3);margin-bottom:4px;';
+      hint.textContent='💡 字義提示：'+c.def;
+      box.appendChild(hint);
+      text=`[BLANK:${c.word}]`;
+    }else{
+      text=`[BLANK:${c.word}]`;
+    }
     const parts=text.split(/(\[BLANK:[^\]]+\])/g);let replaced=false;
     parts.forEach(p=>{
       const m=p.match(/\[BLANK:([^\]]+)\]/);
@@ -817,7 +1021,28 @@ function buildReviewCloze(){
   const row=document.createElement('div');row.className='check-row';
   const newBtn=document.createElement('button');newBtn.className='btn';newBtn.textContent='換一組';newBtn.onclick=buildReviewCloze;
   const checkBtn=document.createElement('button');checkBtn.className='btn pri';checkBtn.style.cssText='background:var(--a);border-color:var(--a);';checkBtn.textContent='批改答案';
-  checkBtn.onclick=()=>{checkBtn.disabled=true;explainDiv.innerHTML='';checkClozeContainer(box,null,explainDiv);renderFCMini();};
+  checkBtn.onclick=async function(){
+  checkBtn.disabled=true;
+  const{ok,bad,errors}=checkClozeContainer(box,null);
+  renderFCMini();
+  if(errors.length>0){
+    const rBtn=document.createElement('button');rBtn.className='btn';
+    rBtn.style.cssText='background:var(--purple-l);color:var(--purple);border-color:var(--purple-m);width:100%;justify-content:center;margin-top:10px;';
+    rBtn.innerHTML='💡 解析本次所有錯誤（共 '+errors.length+' 題）';
+    const rDiv=document.createElement('div');
+    rBtn.onclick=async function(){
+      if(rDiv.innerHTML){rDiv.style.display=rDiv.style.display==='none'?'block':'none';return;}
+      rBtn.disabled=true;rBtn.innerHTML='<span class="spin dk"></span> 解析中...';
+      try{
+        const errList=errors.map((e,i)=>e.type==='mcq'?`${i+1}. 選擇題正確「${e.correct}」，你選「${e.user||'未作答'}」`:`${i+1}. 填空正確「${e.correct}」，你填「${e.user||'未作答'}」`).join('\n');
+        const r=await callClaude('你是語言學習教師，用繁體中文逐題解析錯誤，每題說明正確答案意思、為什麼這樣選、一句記憶技巧。',`請解析：\n${errList}`);
+        rDiv.innerHTML='<div class="explain-box" style="white-space:pre-wrap;">'+r+'</div>';
+        rBtn.innerHTML='收起解析';rBtn.disabled=false;
+      }catch(e){rDiv.innerHTML='<div class="explain-box">解析失敗。</div>';rBtn.disabled=false;rBtn.innerHTML='💡 解析錯誤';}
+    };
+    explainDiv.appendChild(rBtn);explainDiv.appendChild(rDiv);
+  }
+};
   row.appendChild(newBtn);row.appendChild(checkBtn);el.appendChild(row);el.appendChild(explainDiv);
 }
 
