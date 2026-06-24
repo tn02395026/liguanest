@@ -659,6 +659,7 @@ function renderFCFull() {
       + '</div></div>'
       + '<div id="fc-edit-'+idx+'" style="display:none;margin-top:12px;border-top:1px solid var(--bd);padding-top:12px;">'
       + '<div style="display:flex;flex-direction:column;gap:8px;">'
+      + '<div><div class="lbl">單字／片語</div><input class="inp" id="fc-word-'+idx+'" value="'+c.word+'" placeholder="例：be set to、give up、in terms of"></div>'
       + '<div><div class="lbl">發音</div><input class="inp" id="fc-pron-'+idx+'" value="'+(c.pron||'')+'"></div>'
       + '<div><div class="lbl">中文字義</div><input class="inp" id="fc-def-'+idx+'" value="'+(c.def||'')+'"></div>'
       + '<div><div class="lbl">例句 1</div><input class="inp" id="fc-ex0-'+idx+'" value="'+((c.examples&&c.examples[0])||'')+'"></div>'
@@ -678,6 +679,12 @@ function editCardInline(idx) {
 function saveCardEdit(idx) {
   var c = window.LN.cards[idx];
   if (!c) return;
+  var newWord = document.getElementById('fc-word-'+idx).value.trim();
+  if (newWord && newWord !== c.word) {
+    // 更新 wrongBook 裡的紀錄
+    window.LN.wrongBook.forEach(function(w){ if(w.correct===c.word) w.correct=newWord; });
+    c.word = newWord;
+  }
   c.pron = document.getElementById('fc-pron-'+idx).value.trim();
   c.def = document.getElementById('fc-def-'+idx).value.trim();
   var ex0 = document.getElementById('fc-ex0-'+idx).value.trim();
