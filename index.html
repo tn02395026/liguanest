@@ -334,7 +334,7 @@ let chatHistory=[], reviewQueue=[], reviewIdx=0, reviewOk=0, reviewBad=0, isFlip
 // ── Claude API ──
 async function callClaude(system, user, history=[]) {
   const msgs = history.length ? [...history,{role:'user',content:user}] : [{role:'user',content:user}];
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
+  const r = await fetch('https://wild-wood-f618.falllove1314520.workers.dev', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system,messages:msgs})
   });
