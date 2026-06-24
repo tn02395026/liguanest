@@ -594,34 +594,27 @@ function cleanTranscript(text){
 }
 
 function buildClozePrompt(text){
-  const isJP=lang==='jp';
-  // 依文章長度決定挖空數量
+  const isJP = lang === 'jp';
   let targetBlanks;
   if(isJP){
-    const charCount=text.length;
-    if(charCount<=150) targetBlanks='8-10';
-    else if(charCount<=300) targetBlanks='12-15';
-    else if(charCount<=500) targetBlanks='18-22';
-    else targetBlanks='25-30';
-  }else{
-    const wordCount=text.split(/\s+/).filter(Boolean).length;
-    if(wordCount<=100) targetBlanks='8-10';
-    else if(wordCount<=200) targetBlanks='12-15';
-    else if(wordCount<=350) targetBlanks='18-22';
-    else targetBlanks='25-30';
+    const charCount = text.length;
+    if(charCount <= 150) targetBlanks = '8-10';
+    else if(charCount <= 300) targetBlanks = '12-15';
+    else if(charCount <= 500) targetBlanks = '18-22';
+    else targetBlanks = '25-30';
+  } else {
+    const wordCount = text.split(/\s+/).filter(Boolean).length;
+    if(wordCount <= 100) targetBlanks = '8-10';
+    else if(wordCount <= 200) targetBlanks = '12-15';
+    else if(wordCount <= 350) targetBlanks = '18-22';
+    else targetBlanks = '25-30';
   }
-  return`你是語言學習助手。分析文章並生成克漏字練習。
-規則：
-1. 挑 ${targetBlanks} 個單字（依文章長度決定），分兩種類型：
-   - 一般填空：用 [BLANK:答案] 標記
-   - 易混淆選擇題：用 [MCQ:答案:選項A:選項B:選項C] 標記（共4個選項含答案，選項隨機排列）
-2. 易混淆詞：${isJP?'助詞(は/が/を/に/で)、同音異義詞、動詞変化':'affect/effect、rise/raise、fewer/less、since/for、make/do、其他容易混淆的詞'}
-3. 每篇至少 25% 題選擇題，其餘填空
-4. 平均分散在文章各段落，保留足夠前後文線索
-5. 評估難度 A1/A2/B1/B2/C1/C2
-6. 只輸出下面格式：
-DIFFICULTY:B1
-TEXT:文章內容含[BLANK:單字]和[MCQ:答案:選A:選B:選C]...`;
+
+  if(isJP){
+    return "你是日文語言學習出題專家。從文章中挑選 " + targetBlanks + " 個位置出選擇題。\n\n出題原則：\n1. 每題都用 [MCQ:正確答案:選項B:選項C:選項D] 格式\n2. 四個選項必須都是語意上說得通的詞，靠以下條件區分唯一正解：\n   - 助詞差異（は/が/を/に/で/へ/と/も 的精確用法）\n   - 動詞活用形（て形/た形/ます形/ない形）\n   - 正式程度（口語vs書面語）\n   - 固定搭配詞（Collocation）\n3. 絕對不能出「一看就知道」的題目，選項必須讓學習者需要真正思考\n4. 評估難度 A1/A2/B1/B2/C1/C2\n5. 只輸出以下格式：\nDIFFICULTY:B1\nTEXT:文章內容含[MCQ:正解:選B:選C:選D]...";
+  } else {
+    return "你是英文語言學習出題專家，專門設計有鑑別度的克漏字選擇題。從文章中挑選 " + targetBlanks + " 個位置出題。\n\n出題核心原則：\n1. 全部用選擇題，格式：[MCQ:正確答案:選項B:選項C:選項D]\n2. 四個選項必須都是該空格語意上「說得通」的詞，靠以下條件區分唯一正解：\n   a) 句型結構限制（主動/被動、時態、語氣）\n   b) 固定搭配詞 Collocation（make a mistake, take a break, do harm等）\n   c) 詞性形式（形容詞/副詞/名詞/動詞的精確形式）\n   d) 語氣與正式程度（口語vs正式、婉轉vs直接）\n   e) 連接詞邏輯（轉折/因果/遞進/讓步的精確選擇）\n   f) 介系詞搭配（depend on/in/at等固定用法）\n3. 嚴禁出現以下爛題型：\n   - 前後文已明顯暗示情緒/語意，選項卻是完全相反的詞（如happy vs sad）\n   - 選項中有明顯文法錯誤的詞形\n   - 答案憑常識就能猜到，不需要語言知識\n4. 好題目範例：\n   - 搭配詞：He ___ a decision（made/did/took/had）→ make a decision是固定搭配\n   - 連接詞：I studied hard; ___, I failed（therefore/moreover/nevertheless/furthermore）→ 轉折關係\n   - 詞形：She was ___ by the result（surprise/surprised/surprising/surprisingly）→ 被動結構\n5. 評估文章難度 A1/A2/B1/B2/C1/C2\n6. 只輸出以下格式，不要任何說明：\nDIFFICULTY:B2\nTEXT:文章內容含[MCQ:正解:選B:選C:選D]...";
+  }
 }
 
 async function generateCloze(){
