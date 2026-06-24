@@ -561,13 +561,11 @@ async function checkArtCloze(artId){
         const errList=errors.map((e,i)=>{
           if(e.type==='mcq')return`${i+1}. 選擇題正確答案「${e.correct}」，你選了「${e.user||'沒有作答'}」`;
           return`${i+1}. 填空正確答案「${e.correct}」，你填了「${e.user||'沒有作答'}」`;
-        }).join('
-');
+        }).join('\n');
         const ctx=lang==='jp'?'這是日文語言學習。':'這是英文語言學習。';
         const r=await callClaude(
           `你是語言學習教師，用繁體中文解析學生答錯的題目。每題解析：1.正確答案的意思 2.為什麼這裡用這個字/選這個選項 3.一句話記憶技巧。每題之間空一行，格式清晰。${ctx}`,
-          `學生答錯了以下題目，請逐題解析：
-${errList}`
+          '學生答錯了以下題目，請逐題解析：\n'+errList
         );
         resultDiv.innerHTML='<div class="explain-box" style="white-space:pre-wrap;">'+r+'</div>';
         btn.innerHTML='收起解析';btn.disabled=false;
@@ -765,13 +763,11 @@ function checkAnswers(){
         const errList=errors.map((e,i)=>{
           if(e.type==='mcq')return`${i+1}. 選擇題正確答案「${e.correct}」，你選了「${e.user||'沒有作答'}」`;
           return`${i+1}. 填空正確答案「${e.correct}」，你填了「${e.user||'沒有作答'}」`;
-        }).join('
-');
+        }).join('\n');
         const ctx=lang==='jp'?'這是日文語言學習。':'這是英文語言學習。';
         const r=await callClaude(
           `你是語言學習教師，用繁體中文解析學生答錯的題目。每題解析：1.正確答案的意思 2.為什麼這裡用這個字/選這個選項 3.一句話記憶技巧。每題之間空一行，格式清晰。${ctx}`,
-          `學生答錯了以下題目，請逐題解析：
-${errList}`
+          '學生答錯了以下題目，請逐題解析：\n'+errList
         );
         resultDiv.innerHTML='<div class="explain-box" style="white-space:pre-wrap;">'+r+'</div>';
         btn.innerHTML='收起解析';btn.disabled=false;
