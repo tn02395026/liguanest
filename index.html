@@ -559,8 +559,8 @@ async function checkArtCloze(artId){
       btn.disabled=true;btn.innerHTML='<span class="spin dk"></span> AI 解析中...';
       try{
         const errList=errors.map((e,i)=>{
-          if(e.type==='mcq')return`${i+1}. 選擇題正確答案「${e.correct}」，你選了「${e.user||'沒有作答'}」`;
-          return`${i+1}. 填空正確答案「${e.correct}」，你填了「${e.user||'沒有作答'}」`;
+          if(e.type==='mcq')return`${i+1}. 選擇題正確答案「${e.correct}」，你選了「${e.user||"沒有作答"}」`;
+          return`${i+1}. 填空正確答案「${e.correct}」，你填了「${e.user||"沒有作答"}」`;
         }).join('\n');
         const ctx=lang==='jp'?'這是日文語言學習。':'這是英文語言學習。';
         const r=await callClaude(
@@ -581,24 +581,13 @@ function deleteArticle(id){
 
 // ── Cloze ──
 function cleanTranscript(text){
-  // 清理各種時間戳記格式
   let cleaned = text
-    // YouTube 中文時間戳記：0:077秒钟、1:041分钟4秒钟
-    .replace(/\d+:\d+分钟\d+秒钟/g, '')
-    .replace(/\d+:\d+秒钟/g, '')
-    .replace(/\d+分钟\d+秒钟/g, '')
-    // 英文時間戳記：0:07、1:23:45
+    .replace(/\d+:\d+\u5206\u949f\d+\u79d2\u949f/g, '')
+    .replace(/\d+:\d+\u79d2\u949f/g, '')
+    .replace(/\d+\u5206\u949f\d+\u79d2\u949f/g, '')
     .replace(/\d{1,2}:\d{2}:\d{2}/g, '')
     .replace(/\d{1,2}:\d{2}/g, '')
-    // 章節標題保留但移除多餘格式
-    .replace(/第\s*\d+\s*章[：:：]/g, '
-
-')
-    // 清理多餘空白和換行
-    .replace(/
-{3,}/g, '
-
-')
+    .replace(/\n{3,}/g, '\n\n')
     .replace(/\s{2,}/g, ' ')
     .trim();
   return cleaned;
@@ -761,8 +750,8 @@ function checkAnswers(){
       btn.disabled=true;btn.innerHTML='<span class="spin dk"></span> AI 解析中...';
       try{
         const errList=errors.map((e,i)=>{
-          if(e.type==='mcq')return`${i+1}. 選擇題正確答案「${e.correct}」，你選了「${e.user||'沒有作答'}」`;
-          return`${i+1}. 填空正確答案「${e.correct}」，你填了「${e.user||'沒有作答'}」`;
+          if(e.type==='mcq')return`${i+1}. 選擇題正確答案「${e.correct}」，你選了「${e.user||"沒有作答"}」`;
+          return`${i+1}. 填空正確答案「${e.correct}」，你填了「${e.user||"沒有作答"}」`;
         }).join('\n');
         const ctx=lang==='jp'?'這是日文語言學習。':'這是英文語言學習。';
         const r=await callClaude(
